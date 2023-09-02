@@ -53,13 +53,14 @@ class Player:
                     self.x += self.speed
 
 class Laser:
-    def __init__(self,x,y,speed,width,height,color):
+    def __init__(self,x,y,speed,width,height,color,health):
         self.x = x
         self.y = y
         self.speed = speed
         self.width = width
         self.height = height
         self.color = color
+        self.health = health
     def draw(self,window):
         pygame.draw.rect(window, pygame.Color(self.color), pygame.Rect(self.x + self.width / 2, self.y + self.height / 2,self.width,self.height))
         
@@ -96,7 +97,7 @@ p1 = Player(500,900,175,25,5.5)
 
 l_lasers = []
 for i in range(1):
-    laser = Laser(p1.x - 25, p1.y - 25,7.5,20,80,pygame.Color("floralwhite"))
+    laser = Laser(p1.x - 25, p1.y - 25,7.5,20,80,pygame.Color("floralwhite"),2)
     l_lasers.append(laser)
 
 l_asteroids = []
@@ -129,13 +130,17 @@ while True:
         if cooldown <= 0:
             cooldown = 45
             shoot = 1
-            new_laser = Laser(p1.x - 25, p1.y - 25,7.5,20,80,pygame.Color("floralwhite"))
+            new_laser = Laser(p1.x - 25, p1.y - 25,7.5,20,80,pygame.Color("floralwhite"),1)
             l_lasers.append(new_laser)
-    for i in range(len(l_lasers)):
-        l_lasers[i].move()
-        l_lasers[i].draw(window)
-        if l_lasers[i].y == 40:
-            del l_lasers[i]
+    for laser in l_lasers:
+        if laser.health >= 1:
+            laser.move()
+            laser.draw(window)
+            
+            
+    for laser in l_lasers:        
+        if laser.y <= 40 or laser.health <= 0:
+            l_lasers.remove(laser)
     
     for asteroid in l_asteroids:
         if asteroid.health >= 1:
@@ -146,20 +151,26 @@ while True:
         l_asteroids.append(asteroid)
     
     
+    # Update and draw all asteroids
     for asteroid in l_asteroids:
         rect_asteroid = pygame.Rect(asteroid.x - asteroid.width / 2,asteroid.y - asteroid.height / 2,
                             asteroid.width, asteroid.height)
         
         for laser in l_lasers:
-            rect_laser =  pygame.Rect(l_lasers[i].x,l_lasers[i].y,l_lasers[i].width,l_lasers[i].height)
+            rect_laser =  pygame.Rect(laser.x,laser.y,laser.width,laser.height)
  
-            if colision1(rect_asteroid,rect_laser):
+            if colision1(rect_asteroid,rect_laser) == True:
                 asteroid.health -= 1
-        
+                laser.health -= 1
+                
         if asteroid.health >= 1:
             asteroid.draw(window)
+        
+    # Delete asteroids that are dead
+    for asteroid in l_asteroids:
         if asteroid.y >= 1060 or asteroid.health <= 0:
-            del asteroid
+            l_asteroids.remove(asteroid)
+            
     #draws player
     p1.draw(window)
     
