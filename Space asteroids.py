@@ -92,19 +92,40 @@ class Asteroid:
             return
         self.y += self.speed
 
+class Power:
+    def __init__(self,x,y,rad,speed,width,height,health):
+        self.x = x
+        self.y = y
+        self.rad = rad
+        self.speed = speed
+        self.width = width
+        self.height = height
+        self.health = health
+        
+    def draw(self,window):
+        pygame.draw.circle(window, pygame.Color("gray65"), (self.x,self.y), self.rad)
+        
+    def move(self):
+        self.y += self.speed
+        
 clock = pygame.time.Clock()
 p1 = Player(500,900,175,25,5.5)
 
 l_lasers = []
-for i in range(1):
+for i in range(0):
     laser = Laser(p1.x - 25, p1.y - 25,7.5,20,80,pygame.Color("floralwhite"),2)
     l_lasers.append(laser)
 
+l_powers = []
+for i in range(1):
+    power = Power(random.randint(60,940),random.randint(30,65),60,4.5,120,120,1)
+    l_powers.append(power)
+    
 l_asteroids = []
 
 
 a = 1
-cooldown = 45
+cooldown = 30
 
 
 def colision1(rect1 : pygame.Rect,rect2):
@@ -118,7 +139,7 @@ while True:
                 
     if keys[pygame.K_ESCAPE]:
         exit()
-
+    ranpower = random.randint(0,5750)
     events = pygame.event.get()
     for event in events:
         if event.type == pygame.QUIT:
@@ -128,7 +149,7 @@ while True:
     p1.move()
     if keys[pygame.K_SPACE]:
         if cooldown <= 0:
-            cooldown = 45
+            cooldown = 30
             shoot = 1
             new_laser = Laser(p1.x - 25, p1.y - 25,7.5,20,80,pygame.Color("floralwhite"),1)
             l_lasers.append(new_laser)
@@ -147,15 +168,39 @@ while True:
             asteroid.move()
     ranasteroid = random.randint(0,4000)
     if ranasteroid <= 100:
-        asteroid = Asteroid(random.randint(60,940),random.randint(60,160),4.5,0,60,120,120,1)
+        asteroid = Asteroid(random.randint(60,940),random.randint(30,65),4.5,0,60,120,120,1)
         l_asteroids.append(asteroid)
+    
+
+    if ranpower <= 10:
+        power = Power(random.randint(60,940),random.randint(30,65),60,4.5,120,120,1)
+        l_powers.append(power)   
+
+    #Update and draw all powers
+    for power in l_powers:
+        rect_power = pygame.Rect(power.x - power.width / 2,power.y - power.height / 2,
+        power.width, power.height)
+        for laser in l_lasers:
+            rect_laser =  pygame.Rect(laser.x,laser.y,laser.width,laser.height)
+            
+            if colision1(rect_power,rect_laser) == True:
+                power.health -= 1
+                laser.health -= 1
+            
+            if power.health == 1:
+                power.move()
+    
+    #delets dead powers
+    for power in l_powers:
+        if power.health <= 0:
+            l_powers.remove(power)
     
     
     # Update and draw all asteroids
     for asteroid in l_asteroids:
         rect_asteroid = pygame.Rect(asteroid.x - asteroid.width / 2,asteroid.y - asteroid.height / 2,
-                            asteroid.width, asteroid.height)
-        
+        asteroid.width, asteroid.height)
+
         for laser in l_lasers:
             rect_laser =  pygame.Rect(laser.x,laser.y,laser.width,laser.height)
  
@@ -173,6 +218,12 @@ while True:
             
     #draws player
     p1.draw(window)
+    for power in l_powers:
+        if power.health == 1:
+            power.draw(window)
+    
+    for power in l_powers:
+        power.draw(window)
     
     cooldown -= 1
     #time.sleep(0.1)
